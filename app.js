@@ -4,10 +4,9 @@ const mongoose=require("mongoose");
 const ejs=require("ejs");
 const express=require("express")
 const encrypt= require("mongoose-encryption")
+const md5= require("md5")
 
 const app = express();
-
-console.log(process.env.API_KEY);
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
@@ -42,7 +41,7 @@ app.post("/register", function(req,res){
 
     const userName=new user({
         email:req.body.username,
-        password:req.body.password
+        password:md5(req.body.password)
     });
 
     userName.save().then(function(result){
@@ -54,12 +53,14 @@ app.post("/register", function(req,res){
 app.post("/login", function(req,res){
 
     const username=req.body.username;
-    const password=req.body.password;
+    const password=md5(req.body.password);
 
     user.findOne({email:username})
     .then(function(result){
         if(result.password===password){
             res.render("secrets")
+        }else{
+            console.log("Erorr password or email");
         } 
     }).catch(function(err){
        
