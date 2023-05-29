@@ -5,6 +5,8 @@ const ejs=require("ejs");
 const express=require("express")
 const encrypt= require("mongoose-encryption")
 const md5= require("md5")
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const app = express();
 
@@ -39,26 +41,32 @@ app.get("/register", function(req, res){
 
 app.post("/register", function(req,res){
 
-    const userName=new user({
-        email:req.body.username,
-        password:md5(req.body.password)
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+
+        const userName=new user({
+            email:req.body.username,
+            password:hash
+        });
+    
+        userName.save().then(function(result){
+            res.render("secrets");
+        })
     });
-
-    userName.save().then(function(result){
-        res.render("secrets");
-    })
-
 });
 
 app.post("/login", function(req,res){
 
     const username=req.body.username;
-    const password=md5(req.body.password);
+    const password=req.body.password;
 
     user.findOne({email:username})
-    .then(function(result){
-        if(result.password===password){
-            res.render("secrets")
+    .then(function(foundUser){
+        if(foundUser){
+            bcrypt.compare(password, foundUser.password, function(err, result) {
+              if(result=== true){
+                res.render("secrets")
+              }
+            }); 
         }else{
             console.log("Erorr password or email");
         } 
